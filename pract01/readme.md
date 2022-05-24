@@ -139,7 +139,38 @@ if __name__ == '__main__':
     img = raw.postprocess(use_camera_wb=True, half_size=False, no_auto_bright=True, output_bps=16)
     imageio.imsave('rawpy.jpg', img)
  ```
-Результат
-<img src="rawpy.jpg" width="400"/>
+- Результат:
+- 
+Solarized dark                     |  Solarized Ocean
+:---------------------------------:|:-------------------------:
+ <img src="rawpy.jpg" width="400"/>|  <img src="result.jpg" width="400"/>
 
+
+Реализация суперпикселей
+
+ ```
+from skimage.segmentation import slic,mark_boundaries
+from skimage import io
+import matplotlib.pyplot as plt
+
+img = io.imread("foo.png")
+
+
+segments = slic(img, n_segments=60, compactness=10)
+out=mark_boundaries(img,segments)
+plt.subplot(121)
+plt.title("n_segments=60")
+plt.imshow(out)
+
+segments2 = slic(img, n_segments=300, compactness=10)
+out2=mark_boundaries(img,segments2)
+plt.subplot(122)
+plt.title("n_segments=300")
+plt.imshow(out2)
+
+plt.show()
+ ```
+Solarized dark                     |  
+:---------------------------------:|
+ <img src="rawpy.jpg" width="400"/>|  
 
