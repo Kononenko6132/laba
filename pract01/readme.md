@@ -254,10 +254,15 @@ image3=BiCubic_interpolation(image,image.shape[0]*2,image.shape[1]*2)
 image3=Image.fromarray(image3.astype('uint8')).convert('RGB')
 image3.save('rawpy_interpol3.png')
  ```
- - Результат на котором виднее разница:
+ - Результат на котором немного виднее разница:
 - 
-Solarized dark                     |  Solarized Ocean
+Оригинал                           |  После интерполяции
 :---------------------------------:|:-------------------------:
  <img src="ein.png" width="400"/>|  <img src="ein2.png" width="400"/>
  
-
+ - Результат интерполяции:
+- 
+Оригинал                           |  После интерполяции
+:---------------------------------:|:-------------------------:
+ <img src="rawpy.png" width="400"/>|  <img src="rawpy_interpol2.png.png" width="400"/>
+ 
