@@ -172,5 +172,5 @@ plt.show()
  ```
 Solarized dark                     |  
 :---------------------------------:|
- <img src="rawpy.jpg" width="400"/>|  
+ <img src="Superpixel.png" width="400"/>|  
 
