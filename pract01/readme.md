@@ -264,5 +264,5 @@ image3.save('rawpy_interpol3.png')
 - 
 Оригинал                           |  После интерполяции
 :---------------------------------:|:-------------------------:
- <img src="rawpy.png" width="400"/>|  <img src="rawpy_interpol2.png.png" width="400"/>
+ <img src="rawpy.png" width="400"/>|  <img src="rawpy_interpol2.png" width="400"/>
  
