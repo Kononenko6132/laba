@@ -28,4 +28,4 @@ cv2.destroyAllWindows()
 ```
 
 - Результат:
- <img src="screen.jpg" width="500"/>
+ <img src="image.png" width="400"/>
