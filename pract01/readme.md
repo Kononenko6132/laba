@@ -272,4 +272,4 @@ plt.show()
  
  Оригинал                           |  После VNG
 :---------------------------------:|:-------------------------:
- <img src="blw.tif" width="400"/>|  <img src="star_demos.tif" width="400"/>
+ <img src="beforeVNG.png" width="400"/>|  <img src="aftweVNG.png" width="400"/>
