@@ -172,7 +172,7 @@ plt.show()
  ```
 Solarized dark                          |  
 :--------------------------------------:|
- <img src="Superpixel.png" width="500"/>|  
+ <img src="Superpixel.png" width="700"/>|  
  
 Реализация билинейной интерполяции
 
