@@ -94,4 +94,40 @@ public void rgbChannels(BufferedImage img) throws IOException {
 Отображение по каналам R                  | Отображение по каналам G                | Отображение по каналам B               | Оригинал               | 
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|:--------------------------------------:|
  <img src="channelR.jpg" width="700"/>    |  <img src="channelG.jpg" width="700"/>  |  <img src="channelB.jpg" width="700"/> | <img src="original.jpg" width="700"/>  |
+ 
+5. Построить проекцию цветов исходного изображения на цветовой локус (плоскость xy).
+```
+public void loscut(BufferedImage img) throws IOException {
+        int size = 1000;
+        int xMove = (int) Math.round(0.312 * size) / 2;
+        int yMove = (int) Math.round(0.329 * size) / 2;
+        BufferedImage loscut = new BufferedImage(size, size, TYPE_INT_RGB);
+        for (int i = 0; i < img.getHeight(); i++) {
+            for (int j = 0; j < img.getWidth(); j++) {
+                int rgb = img.getRGB(j, i);
+                int[] xyz = RGBtoXYZ(ch1(rgb), ch2(rgb), ch3(rgb));
+                double sum = xyz[0] + xyz[1] + xyz[2];
+                if (sum > 0) {
+                    double nx = xyz[0] / sum;
+                    double ny = xyz[1] / sum;
+                    double nz = xyz[2] / sum;
+                    int x = (int) Math.round((1 - ny - nz) * size) + xMove;
+                    int y = (int) Math.round((1 - nx - nz) * size * -1) + size - yMove;
+                    try {
+                        loscut.setRGB(x, y, rgb);
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        System.out.println("x: " + x + "; y: " + (size - y));
+                    }
+                }
+            }
+        }
+        save(loscut, "result/loscut", "result", FORMAT);
+    }
+```
+Отображение по каналам R                  | Оригинал                                 |
+:----------------------------------------:|:----------------------------------------:|
+ <img src="locust.jpg" width="300"/>       | <img src="original.jpg" width="300"/>      
+
+
+
 
