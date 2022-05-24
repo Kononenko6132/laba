@@ -5,7 +5,7 @@
 
 Оригинал                                |  
 :--------------------------------------:|
- <img src="orig.jpg" width="700"/>|  
+ <img src="original.jpg" width="700"/>|  
 
 ```
 public void channels(BufferedImage img) throws IOException {
@@ -32,6 +32,6 @@ public void channels(BufferedImage img) throws IOException {
 ```
 
 
-Отображение по каналам                  |  
-:--------------------------------------:|
- <img src="channel1.jpg" width="700"/>|  
+Отображение по каналам R                  | Отображение по каналам G                 | Отображение по каналам B                       | 
+:----------------------------------------:|:----------------------------------------:|:----------------------------------------------:|
+ <img src="channel1.jpg" width="700"/>    |  <img src="channel2.jpg" width="700"/>   |  <img src="channel3.jpg" width="700"/>         |
