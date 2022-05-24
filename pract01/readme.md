@@ -254,11 +254,6 @@ image3=BiCubic_interpolation(image,image.shape[0]*2,image.shape[1]*2)
 image3=Image.fromarray(image3.astype('uint8')).convert('RGB')
 image3.save('rawpy_interpol3.png')
  ```
- - Результат на котором немного виднее разница:
-- 
-Оригинал                           |  После интерполяции
-:---------------------------------:|:-------------------------:
- <img src="ein.png" width="400"/>|  <img src="ein2.png" width="400"/>
  
  - Результат интерполяции:
 - 
@@ -266,3 +261,15 @@ image3.save('rawpy_interpol3.png')
 :---------------------------------:|:-------------------------:
  <img src="rawpy.png" width="400"/>|  <img src="rawpy_interpol2.png" width="400"/>
  
+VNG алгоритм
+``` 
+bayer = cv2.imread(r'blw.tif', -1)
+fig = plt.figure(figsize=(8,8))
+plt.imshow(bayer, cmap='gray')
+plt.title('Input Image')
+plt.show()
+ ```
+ 
+ Оригинал                           |  После VNG
+:---------------------------------:|:-------------------------:
+ <img src="blw.tif" width="400"/>|  <img src="star_demos.tif" width="400"/>
