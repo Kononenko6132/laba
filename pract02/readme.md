@@ -5,7 +5,7 @@
 
 Оригинал                                |  
 :--------------------------------------:|
- <img src="original.jpg" width="700"/>|  
+ <img src="original.jpg" width="300"/>|  
 
 ```
 public void channels(BufferedImage img) throws IOException {
@@ -35,3 +35,32 @@ public void channels(BufferedImage img) throws IOException {
 Отображение по каналам R                  | Отображение по каналам G                 | Отображение по каналам B                       | 
 :----------------------------------------:|:----------------------------------------:|:----------------------------------------------:|
  <img src="channel1.jpg" width="700"/>    |  <img src="channel2.jpg" width="700"/>   |  <img src="channel3.jpg" width="700"/>         |
+ 
+ Лианеризовать изображение обратным гамма преобразованием.
+ 
+ ```
+public BufferedImage gammaCorrection(BufferedImage img, double gamma) throws IOException {
+    int h = img.getHeight();
+    int w = img.getWidth();
+    BufferedImage result = new BufferedImage(w, h, TYPE_INT_RGB);
+    int[] gammaLUT = new int[256];
+    for (int i = 0; i < gammaLUT.length; i++) {
+        gammaLUT[i] = (int) (255 * (Math.pow(i / 255f, 1 / gamma)));
+    }
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            int rgb = img.getRGB(x, y);
+            int red = gammaLUT[red(rgb)];
+            int green = gammaLUT[green(rgb)];
+            int blue = gammaLUT[blue(rgb)];
+            result.setRGB(x, y, rgb(red, green, blue));
+        }
+    }
+    save(result, "result/gammaCor", "result", FORMAT);
+    return result;
+}
+```
+
+Отображение по каналам R                  | 
+:----------------------------------------:|
+ <img src="gamma.jpg" width="300"/>    |  
