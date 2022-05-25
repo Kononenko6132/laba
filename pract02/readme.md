@@ -289,3 +289,96 @@ public BufferedImage XYZtoRGB(BufferedImage img) throws IOException {
 Ручное               | Библиотека             |Разница               | 
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
  <img src="xyzrgbMethod.jpg" width="700"/>  |  <img src="xyzrgbLib.jpg" width="700"/>|  <img src="xyzrgbDif.jpg" width="700"/> |   |
+ 
+ 
+ Написать функцию перевода цветов из линейного RGB в HSV и обратно. Найти подходящую библиотечную функцию. Сравнить результаты через построение разностного изоборажения.
+ 
+ ```
+ private static double[] RGBtoHSV(int r, int g, int b) {
+        List<Integer> arr = Arrays.asList(r, g, b);
+        double min = Collections.min(arr);
+        double v = Collections.max(arr);
+        double s;
+        if (v == 0) {
+            s = 0;
+        } else {
+            s = 1 - min / v;
+        }
+        double h = 0;
+        if (v == r) {
+            h = 60 * (g - b) / (v - min);
+        } else if (v == g) {
+            h = 60 * (b - r) / (v - min) + 120;
+        } else if (v == b) {
+            h = 60 * (r - g) / (v - min) + 240;
+        }
+        if (h < 0) h += 360;
+        return new double[]{h / 2, s * 255, v * 255};
+    }
+    
+ public static int HSVtoRGB(float H, float S, float V) {
+        float R, G, B;
+        H /= 180f;
+        S /= 255f;
+        V /= 255f;
+        if (S == 0) {
+            R = V * 255;
+            G = V * 255;
+            B = V * 255;
+        } else {
+            float var_h = H * 6;
+            if (var_h == 6) {
+                var_h = 0;
+            }
+            int var_i = (int) Math.floor(var_h);
+            float var_1 = V * (1 - S);
+            float var_2 = V * (1 - S * (var_h - var_i));
+            float var_3 = V * (1 - S * (1 - (var_h - var_i)));
+            float var_r;
+            float var_g;
+            float var_b;
+            if (var_i == 0) {
+                var_r = V;
+                var_g = var_3;
+                var_b = var_1;
+            } else if (var_i == 1) {
+                var_r = var_2;
+                var_g = V;
+                var_b = var_1;
+            } else if (var_i == 2) {
+                var_r = var_1;
+                var_g = V;
+                var_b = var_3;
+            } else if (var_i == 3) {
+                var_r = var_1;
+                var_g = var_2;
+                var_b = V;
+            } else if (var_i == 4) {
+                var_r = var_3;
+                var_g = var_1;
+                var_b = V;
+            } else {
+                var_r = V;
+                var_g = var_1;
+                var_b = var_2;
+            }
+            R = var_r * 255;
+            G = var_g * 255;
+            B = var_b * 255;
+        }
+        return color(R, G, B);
+    }
+ ```
+ 
+ Ручное RGB->HSV              | Библиотека RGB->HSV             |Разница RGB->HSV               | 
+:----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
+ <img src="rgbhsvMethod.jpg" width="700"/>  |  <img src="rgbhsvLib.jpg" width="700"/>|  <img src="rgbhsvDif.jpg" width="700"/> |   |
+ 
+ 
+ Ручное HSV->RGB            | Библиотека HSV->RGB             |Разница HSV->RGB               | 
+:----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
+ <img src="hsvrgbMethod.jpg" width="700"/>  |  <img src="hsvrgbLib.jpg" width="700"/>|  <img src="hsvrgbDif.jpg" width="700"/> |   |
+ 
+ 
+ 
+ 
