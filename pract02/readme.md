@@ -126,7 +126,7 @@ public void rgbChannels(BufferedImage img) throws IOException {
  
  Отображение по каналам R                 | Отображение по каналам G                | Отображение по каналам B               | Оригинал               | 
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|:--------------------------------------:|
- <img src="original_R.jpg" width="700"/>  |  <img src="original_G.jpg" width="700"/>|  <img src="original_B.jpg" width="700"/> | <img src="original.jpg" width="700"/>  |
+ <img src="original_B.jpg" width="700"/>  |  <img src="original_G.jpg" width="700"/>|  <img src="original_R.jpg" width="700"/> | <img src="original.jpg" width="700"/>  |
  
  
  
