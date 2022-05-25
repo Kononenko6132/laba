@@ -249,7 +249,43 @@ public BufferedImage RGBtoXYZ(BufferedImage img) throws IOException {
         return result;
     }
 ```
-Разница по каналу R                 | Разница по каналу G              | Разница по каналу В               | 
+Ручное               | Библиотека             |Разница               | 
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
  <img src="rgbxyzMethod.jpg" width="700"/>  |  <img src="rgbxyzLib.jpg" width="700"/>|  <img src="rgbxyzDif.jpg" width="700"/> |   |
 
+
+Написать функцию перевода цветов из XYZ в RGB (построить обратную матрицу XYZ в RGB). Преобразовать изображение XYZ в линейный RGB. Применить гамма преобразование. Сравнить результаты через построение разностного изоборажения.
+
+```
+public BufferedImage XYZtoRGB(BufferedImage img) throws IOException {
+        //opencv
+        Mat rgbMat = new Mat();
+        Imgproc.cvtColor(img2Mat(img), rgbMat, Imgproc.COLOR_XYZ2BGR);
+        BufferedImage resultL = (BufferedImage) HighGui.toBufferedImage(rgbMat);
+
+        int h = img.getHeight();
+        int w = img.getWidth();
+        BufferedImage result = new BufferedImage(w, h, TYPE_INT_RGB);
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                int xyz = img.getRGB(j, i);
+                //int rgb = gammaCorrection(XYZtoRGB(ch3(xyz), ch2(xyz), ch1(xyz)), 2.4);
+                int rgb = XYZtoRGB(ch3(xyz), ch2(xyz), ch1(xyz));
+                result.setRGB(j, i, rgb);
+            }
+        }
+        save(result, "result/XYZtoRGB", "result", FORMAT);
+        save(resultL, "result/XYZtoRGB", "resultLib", FORMAT);
+        save(diff(result, resultL), "result/XYZtoRGB", "diff", FORMAT);
+        return result;
+    }
+        private static int XYZtoRGB(int x, int y, int z) {
+        double r = x * 3.240479 + y * -1.537150 + z * -0.498535;
+        double g = x * -0.969256 + y * 1.875991 + z * 0.041556;
+        double b = x * 0.055648 + y * -0.204043 + z * 1.057311;
+        return color(r, g, b);
+    }
+```
+Ручное               | Библиотека             |Разница               | 
+:----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
+ <img src="xyzrgbMethod.jpg" width="700"/>  |  <img src="xyzrgbLib.jpg" width="700"/>|  <img src="xyzrgbDif.jpg" width="700"/> |   |
