@@ -194,5 +194,62 @@ public void loscut(BufferedImage img) throws IOException {
  <img src="locust.jpg" width="300"/>       | <img src="original.jpg" width="300"/>      
 
 
+Написать функцию перевода цветов из линейного RGB в XYZ с использованием матрицы. Найти подходящую библиотечную функцию. Сравнить результаты через построение разностного изоборажения.
 
+```
+public BufferedImage RGBtoXYZ(BufferedImage img) throws IOException {
+        //opencv
+        Mat xyzMat = new Mat();
+        Imgproc.cvtColor(img2Mat(img), xyzMat, Imgproc.COLOR_BGR2XYZ);
+        BufferedImage resultL = (BufferedImage) HighGui.toBufferedImage(xyzMat);
+
+        int h = img.getHeight();
+        int w = img.getWidth();
+        BufferedImage result = new BufferedImage(w, h, TYPE_INT_RGB);
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                int rgb = img.getRGB(j, i);
+                int[] xyz = RGBtoXYZ(ch1(rgb), ch2(rgb), ch3(rgb));
+                result.setRGB(j, i, color(xyz[2], xyz[1], xyz[0]));
+            }
+        }
+        save(result, "result/RGBtoXYZ", "result", FORMAT);
+        save(resultL, "result/RGBtoXYZ", "resultLib", FORMAT);
+        save(diff(result, resultL), "result/RGBtoXYZ", "diff", FORMAT);
+        return result;
+    }
+        private static int[] RGBtoXYZ(double r, double g, double b) {
+        return new int[]{
+                (int) Math.round(r * 0.412453 + g * 0.357580 + b * 0.180423),
+                (int) Math.round(r * 0.212671 + g * 0.715160 + b * 0.072169),
+                (int) Math.round(r * 0.019334 + g * 0.119193 + b * 0.950227)
+        };
+    }
+    
+    private static BufferedImage diff(BufferedImage imgA, BufferedImage imgB) {
+        int h = imgA.getHeight();
+        int w = imgA.getWidth();
+        BufferedImage result = new BufferedImage(w, h, TYPE_INT_RGB);
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                int colorA = imgA.getRGB(j, i);
+                int colorB = imgB.getRGB(j, i);
+                int r = ch1(colorA) - ch1(colorB);
+                int g = ch2(colorA) - ch2(colorB);
+                int b = ch3(colorA) - ch3(colorB);
+                if (r < 0) r = 0;
+                else if (r > 255) r = 255;
+                if (g < 0) g = 0;
+                else if (g > 255) g = 255;
+                if (b < 0) b = 0;
+                else if (b > 255) b = 255;
+                result.setRGB(j, i, color(r, g, b));
+            }
+        }
+        return result;
+    }
+```
+Разница по каналу R                 | Разница по каналу G              | Разница по каналу В               | 
+:----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
+ <img src="rgbxyzMethod.jpg" width="700"/>  |  <img src="rgbxyzLib.jpg" width="700"/>|  <img src="rgbxyzDif.jpg" width="700"/> |   |
 
