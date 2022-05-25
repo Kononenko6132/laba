@@ -129,7 +129,35 @@ public void rgbChannels(BufferedImage img) throws IOException {
  <img src="original_B.jpg" width="700"/>  |  <img src="original_G.jpg" width="700"/>|  <img src="original_R.jpg" width="700"/> | <img src="original.jpg" width="700"/>  |
  
  
- 
+Отобразить поканально разницу между исходным изображением и линеаризованным.
+```
+private void difference(BufferedImage img, BufferedImage gCor) throws IOException {
+    int h = img.getHeight();
+    int w = img.getWidth();
+    BufferedImage chR = new BufferedImage(w, h, TYPE_INT_RGB);
+    BufferedImage chG = new BufferedImage(w, h, TYPE_INT_RGB);
+    BufferedImage chB = new BufferedImage(w, h, TYPE_INT_RGB);
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            int orig = img.getRGB(x, y);
+            int corr = gCor.getRGB(x, y);
+            int red = red(orig) - red(corr);
+            int green = green(orig) - green(corr);
+            int blue = blue(orig) - blue(corr);
+            chR.setRGB(x, y, rgb(red, 0, 0));
+            chG.setRGB(x, y, rgb(0, green, 0));
+            chB.setRGB(x, y, rgb(0, 0, blue));
+        }
+    }
+    save(chR, "result/difference", "r", FORMAT);
+    save(chG, "result/difference", "g", FORMAT);
+    save(chB, "result/difference", "b", FORMAT);
+}
+```
+Разница по каналу R                 | Разница по каналу G              | Разница по каналу В               | 
+:----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
+ <img src="difR.jpg" width="700"/>  |  <img src="difG.jpg" width="700"/>|  <img src="difB.jpg" width="700"/> |   |
+
  
  
 5. Построить проекцию цветов исходного изображения на цветовой локус (плоскость xy).
