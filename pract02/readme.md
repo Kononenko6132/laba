@@ -31,6 +31,26 @@ public void channels(BufferedImage img) throws IOException {
 }
 ```
 
+```
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+from PIL import Image
+
+img_name = "original.jpg"
+img = cv2.imread(img_name)
+
+b, g, r = cv2.split(img)
+
+image1=Image.fromarray(b.astype('uint8')).convert('RGB')
+image1.save('originalB.jpg')
+
+image2=Image.fromarray(g.astype('uint8')).convert('RGB')
+image2.save('originalG.jpg')
+
+image3=Image.fromarray(r.astype('uint8')).convert('RGB')
+image3.save('originalR.jpg')
+```
 
 
 
@@ -103,6 +123,10 @@ public void rgbChannels(BufferedImage img) throws IOException {
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|:--------------------------------------:|
  <img src="channelR.jpg" width="700"/>    |  <img src="channelG.jpg" width="700"/>  |  <img src="channelB.jpg" width="700"/> | <img src="original.jpg" width="700"/>  |
  
+ 
+ Отображение по каналам R                 | Отображение по каналам G                | Отображение по каналам B               | Оригинал               | 
+:----------------------------------------:|:---------------------------------------:|:--------------------------------------:|:--------------------------------------:|
+ <img src="original_R.jpg" width="700"/>  |  <img src="original_G.jpg" width="700"/>|  <img src="original_B.jpg" width="700"/> | <img src="original.jpg" width="700"/>  |
  
  
  
