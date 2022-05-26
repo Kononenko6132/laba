@@ -1,6 +1,6 @@
-Лабораторная работа 2. Переход между цветовыми пространствами. Линейный и нелинейный переход. Мера цветовой разницы. Функции преобразования яркости. Гамма, логарифмическое, экспоненциаяльное кодирование.
+# Лабораторная работа 2. Переход между цветовыми пространствами. Линейный и нелинейный переход. Мера цветовой разницы. Функции преобразования яркости. Гамма, логарифмическое, экспоненциаяльное кодирование.
 
-Отобразить изображение по каналам RGB (каждый канал представить как градации серого).
+## Отобразить изображение по каналам RGB (каждый канал представить как градации серого).
 
 
 Оригинал                                |  
@@ -64,7 +64,7 @@ image3.save('originalR.jpg')
  <img src="originalR.jpg" width="700"/>   |  <img src="originalG.jpg" width="700"/> |  <img src="originalB.jpg" width="700"/>| <img src="original.jpg" width="700"/>  |
  
  
- Лианеризовать изображение обратным гамма преобразованием.
+## Лианеризовать изображение обратным гамма преобразованием.
  
  ```
 public BufferedImage gammaCorrection(BufferedImage img, double gamma) throws IOException {
@@ -89,11 +89,11 @@ public BufferedImage gammaCorrection(BufferedImage img, double gamma) throws IOE
 }
 ```
 
-Отображение по каналам R                  | Оригинал                                 |
+Лианезированное гамма преобразованием                 | Оригинал                                 |
 :----------------------------------------:|:----------------------------------------:|
  <img src="gamma.jpg" width="300"/>       | <img src="original.jpg" width="300"/>       |  
 
-Отобразить по каналам RGB.
+## Отобразить по каналам RGB.
 ```
 public void rgbChannels(BufferedImage img) throws IOException {
     int h = img.getHeight();
@@ -129,7 +129,7 @@ public void rgbChannels(BufferedImage img) throws IOException {
  <img src="original_B.jpg" width="700"/>  |  <img src="original_G.jpg" width="700"/>|  <img src="original_R.jpg" width="700"/> | <img src="original.jpg" width="700"/>  |
  
  
-Отобразить поканально разницу между исходным изображением и линеаризованным.
+## Отобразить поканально разницу между исходным изображением и линеаризованным.
 ```
 private void difference(BufferedImage img, BufferedImage gCor) throws IOException {
     int h = img.getHeight();
@@ -160,7 +160,7 @@ private void difference(BufferedImage img, BufferedImage gCor) throws IOExceptio
 
  
  
-5. Построить проекцию цветов исходного изображения на цветовой локус (плоскость xy).
+##  Построить проекцию цветов исходного изображения на цветовой локус (плоскость xy).
 ```
 public void loscut(BufferedImage img) throws IOException {
         int size = 1000;
@@ -189,12 +189,12 @@ public void loscut(BufferedImage img) throws IOException {
         save(loscut, "result/loscut", "result", FORMAT);
     }
 ```
-Отображение по каналам R                  | Оригинал                                 |
+Локуст                  | Оригинал                                 |
 :----------------------------------------:|:----------------------------------------:|
  <img src="locust.jpg" width="300"/>       | <img src="original.jpg" width="300"/>      
 
 
-Написать функцию перевода цветов из линейного RGB в XYZ с использованием матрицы. Найти подходящую библиотечную функцию. Сравнить результаты через построение разностного изоборажения.
+## Написать функцию перевода цветов из линейного RGB в XYZ с использованием матрицы. Найти подходящую библиотечную функцию. Сравнить результаты через построение разностного изоборажения.
 
 ```
 public BufferedImage RGBtoXYZ(BufferedImage img) throws IOException {
@@ -249,12 +249,12 @@ public BufferedImage RGBtoXYZ(BufferedImage img) throws IOException {
         return result;
     }
 ```
-Ручное               | Библиотека             |Разница               | 
+Ручное RGB в XYZ        | Библиотека             |Разница               | 
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
  <img src="rgbxyzMethod.jpg" width="700"/>  |  <img src="rgbxyzLib.jpg" width="700"/>|  <img src="rgbxyzDif.jpg" width="700"/> |   |
 
 
-Написать функцию перевода цветов из XYZ в RGB (построить обратную матрицу XYZ в RGB). Преобразовать изображение XYZ в линейный RGB. Применить гамма преобразование. Сравнить результаты через построение разностного изоборажения.
+## Написать функцию перевода цветов из XYZ в RGB (построить обратную матрицу XYZ в RGB). Преобразовать изображение XYZ в линейный RGB. Применить гамма преобразование. Сравнить результаты через построение разностного изоборажения.
 
 ```
 public BufferedImage XYZtoRGB(BufferedImage img) throws IOException {
@@ -286,12 +286,12 @@ public BufferedImage XYZtoRGB(BufferedImage img) throws IOException {
         return color(r, g, b);
     }
 ```
-Ручное               | Библиотека             |Разница               | 
+Ручное XYZ в RGB               | Библиотека             |Разница               | 
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
  <img src="xyzrgbMethod.jpg" width="700"/>  |  <img src="xyzrgbLib.jpg" width="700"/>|  <img src="xyzrgbDif.jpg" width="700"/> |   |
  
  
- Написать функцию перевода цветов из линейного RGB в HSV и обратно. Найти подходящую библиотечную функцию. Сравнить результаты через построение разностного изоборажения.
+## Написать функцию перевода цветов из линейного RGB в HSV и обратно. Найти подходящую библиотечную функцию. Сравнить результаты через построение разностного изоборажения.
  
  ```
  private static double[] RGBtoHSV(int r, int g, int b) {
