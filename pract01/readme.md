@@ -1,10 +1,10 @@
 
-Лабораторная работа 2. Переход между цветовыми пространствами. Линейный и нелинейный переход. Мера цветовой разницы. Функции преобразования яркости. Гамма, логарифмическое, экспоненциаяльное кодирование.
+# Лабораторная работа 2. Переход между цветовыми пространствами. Линейный и нелинейный переход. Мера цветовой разницы. Функции преобразования яркости. Гамма, логарифмическое, экспоненциаяльное кодирование.
 
 Библиотеки, используемы в работе:
-cv2, rawpy, imageio, numpy, PIL, rawkit
+cv2, rawpy, imageio, numpy, PIL, rawkit, exifread, skimage, matplotlib, math
 
-Чтение изображений с камеры устройства
+## Чтение изображений с камеры устройства
 ```
 import cv2
 import rawpy
@@ -26,11 +26,12 @@ print("Successfully saved")
 cap.release()
 cv2.destroyAllWindows()
 ```
-
-- Результат:
- <img src="image.png" width="400"/>
+Результат чтения изображения с камеры ноутбука:                          |  
+:--------------------------------------:|
+  <img src="image.png" width="400"/>|  
  
- Получение RAW изображения с устройства и создание алгоритма "байеризации"
+ 
+## Получение RAW изображения с устройства и создание алгоритма "байеризации"
 ```
 import rawpy
 import numpy as np
@@ -139,14 +140,14 @@ if __name__ == '__main__':
     img = raw.postprocess(use_camera_wb=True, half_size=False, no_auto_bright=True, output_bps=16)
     imageio.imsave('rawpy.jpg', img)
  ```
-- Результат:
-- 
-Solarized dark                     |  Solarized Ocean
+
+ 
+Преобразованное в jpg                     | Результат байеризации |
 :---------------------------------:|:-------------------------:
  <img src="rawpy.jpg" width="400"/>|  <img src="result.jpg" width="400"/>
 
 
-Реализация суперпикселей
+##  Реализация суперпикселей
 
  ```
 from skimage.segmentation import slic,mark_boundaries
@@ -170,11 +171,11 @@ plt.imshow(out2)
 
 plt.show()
  ```
-Solarized dark                          |  
+Суперпиксели                          |  
 :--------------------------------------:|
  <img src="Superpixel.png" width="700"/>|  
  
-Реализация билинейной интерполяции
+##  Реализация билинейной интерполяции
 
  ```
 from PIL import Image
@@ -254,14 +255,13 @@ image3=BiCubic_interpolation(image,image.shape[0]*2,image.shape[1]*2)
 image3=Image.fromarray(image3.astype('uint8')).convert('RGB')
 image3.save('rawpy_interpol3.png')
  ```
- 
- - Результат интерполяции:
+
 - 
 Оригинал                           |  После интерполяции
 :---------------------------------:|:-------------------------:
  <img src="rawpy.png" width="400"/>|  <img src="rawpy_interpol2.png" width="400"/>
  
-VNG алгоритм
+## VNG алгоритм
 ``` 
 bayer = cv2.imread(r'blw.tif', -1)
 fig = plt.figure(figsize=(8,8))
