@@ -263,11 +263,12 @@ image3.save('rawpy_interpol3.png')
  
 ## VNG алгоритм
 ``` 
-bayer = cv2.imread(r'blw.tif', -1)
+demos = cv2.cvtColor(bayer, cv2.COLOR_BayerGR2BGR_VNG)
 fig = plt.figure(figsize=(8,8))
-plt.imshow(bayer, cmap='gray')
-plt.title('Input Image')
+plt.imshow(demos, cmap='gray')
+plt.title('VNG OpenCV')
 plt.show()
+status = cv2.imwrite(r'star_demos.tif', demos)
  ```
  
  Оригинал                           |  После VNG
