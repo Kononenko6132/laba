@@ -86,9 +86,8 @@ def pack_raw(raw_path, white_balance=True, auto_bright=True, HDR=True, save_JPEG
     raw = rawpy.imread(raw_path)
     im = raw.raw_image_visible.astype(np.float32)
 
-    # subtract the black level
-    # 16383(2^14) is the camera's maximal pixel value, you can get it by "np.max(raw.raw_image)" . Ensure full exposure!
-    im = np.maximum(im - raw.black_level_per_channel[0], 0) / (16383 - raw.black_level_per_channel[0])
+  
+    im = np.maximum(im - raw.black_level_per_channel[0], 0) / (np.max(raw.raw_image) - raw.black_level_per_channel[0])
 
     im = np.expand_dims(im, axis=2)
     H = im.shape[0]
