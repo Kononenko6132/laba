@@ -1,393 +1,3 @@
-```
-import numpy as np
-import imageio 
-from skimage import io
-
-abs = np.abs
-zeros = np.zeros
-sum = np.sum
-round = np.round
- 
-def vng(inp, pat_str='GRBG'):
-    '''
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-    % 
-    % function out = vng(inp) 
-    % returns the color interpolated image using 
-    % interpolation based on variable number of gradients 
-    % method 
-    % 
-    % Assumptions : in has following color patterns 
-    % 
-    %  ------------------> x 
-    %  |  G R G R ... 
-    %  |  B G B G ... 
-    %  |  G R G R ... 
-    %  |  B G B G ... 
-    %  |  . . . . . 
-    %  |  . . . .  . 
-    %  |  . . . .   . 
-    %  | 
-    %  V y 
-    % 
-    % 
-    % Input : 
-    % 
-    % inp : original image matrix (mxnx3), m&n even 
-    % 
-    % Output : 
-    % 
-    % out : color interpolated image 
-    % 
-    % Last Modified : 02/14/19 
-    % 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    '''
-    if inp.ndim == 2:
-        inp = np.repeat(inp[:,:,np.newaxis], 3, axis=2)
-
-    assert(pat_str in ['GRBG','GBRG','RGGB','BGGR'])
-
-    if pat_str in ['GRBG']:
-        pass
-    elif pat_str in ['GBRG']:
-        # This code only supports GRBG for now, so we must roll the input and then roll it back.
-        inp = np.roll(inp, (1,1), axis=(0,1))
-    elif pat_str in ['RGGB']:
-        inp = np.roll(inp, (0,1), axis=(0,1))
-    elif pat_str in ['BGGR']:
-        inp = np.roll(inp, (1,0), axis=(0,1))      
-             
-    m,n = inp.shape[0:2]
-     
-    inp = inp.astype('float')
-     
-    inR = inp[:,:,0]
-    inG = inp[:,:,1]
-    inB = inp[:,:,2] 
-    out = inp.copy()
-    outR = inR.copy()
-    outG = inG.copy()
-    outB = inB.copy()
-     
-    def T_func(gra):
-        k1 = 1.5; k2 = 0.5
-        T = k1*min(gra) + k2*(max(gra)-min(gra))
-#         T = min(gra) + max(max(gra)/2., 1) # Used in the OpenCV VNG implementation
-#         T = min(gra) + 1
-        return T
-    
-    # Pixel coordinates for GRBG pattern (assumed)
-    # G R G R
-    # B G B G
-    # G R G R
-    # B G B G        
-    Ry = range(2,m-2,2)
-    Rx = range(3,n-1,2)
-    By = range(3,m-1,2)
-    Bx = range(2,n-2,2)
-    G0y = range(2,m-2,2)
-    G0x = range(2,n-2,2)
-    G1y = range(3,m-1,2)
-    G1x = range(3,n-1,2)
-      
-    # Estimate the missing color values at a non-green pixel 
-    # First : consider at red pixels 
-    for i in Ry:
-        for j in Rx:
-            # form 8 gradients : N,E,S,W,NE,SE,NW,SW 
-            gra_N = abs(inG[i-1,j]-inG[i+1,j])+abs(inR[i-2,j]-inR[i,j])+0.5*abs(inB[i-1,j-1]-inB[i+1,j-1])+0.5*abs(inB[i-1,j+1]-inB[i+1,j+1])+0.5*abs(inG[i-2,j-1]-inG[i,j-1])+0.5*abs(inG[i-2,j+1]-inG[i,j+1])
-            gra_E = abs(inG[i,j+1]-inG[i,j-1])+abs(inR[i,j+2]-inR[i,j])+0.5*abs(inB[i-1,j+1]-inB[i-1,j-1])+0.5*abs(inB[i+1,j+1]-inB[i+1,j-1])+0.5*abs(inG[i-1,j+2]-inG[i-1,j])+0.5*abs(inG[i+1,j+2]-inG[i+1,j])
-            gra_S = abs(inG[i+1,j]-inG[i-1,j])+abs(inR[i+2,j]-inR[i,j])+0.5*abs(inB[i+1,j+1]-inB[i-1,j+1])+0.5*abs(inB[i+1,j-1]-inB[i-1,j-1])+0.5*abs(inG[i+2,j+1]-inG[i,j+1])+0.5*abs(inG[i+2,j-1]-inG[i,j-1])
-            gra_W = abs(inG[i,j-1]-inG[i,j+1])+abs(inR[i,j-2]-inR[i,j])+0.5*abs(inB[i+1,j-1]-inB[i+1,j+1])+0.5*abs(inB[i-1,j-1]-inB[i-1,j+1])+0.5*abs(inG[i+1,j-2]-inG[i+1,j])+0.5*abs(inG[i-1,j-2]-inG[i-1,j])
-      
-            gra_NE = abs(inB[i-1,j+1]-inB[i+1,j-1])+abs(inR[i-2,j+2]-inR[i,j])+0.5*abs(inG[i-1,j]-inG[i,j-1])+0.5*abs(inG[i,j+1]-inG[i+1,j])+0.5*abs(inG[i-2,j+1]-inG[i-1,j])+0.5*abs(inG[i-1,j+2]-inG[i,j+1])
-            gra_SE = abs(inB[i+1,j+1]-inB[i-1,j-1])+abs(inR[i+2,j+2]-inR[i,j])+0.5*abs(inG[i,j+1]-inG[i-1,j])+0.5*abs(inG[i+1,j]-inG[i,j-1])+0.5*abs(inG[i+1,j+2]-inG[i,j+1])+0.5*abs(inG[i+2,j+1]-inG[i+1,j])
-            gra_NW = abs(inB[i-1,j-1]-inB[i+1,j+1])+abs(inR[i-2,j-2]-inR[i,j])+0.5*abs(inG[i,j-1]-inG[i+1,j])+0.5*abs(inG[i-1,j]-inG[i,j+1])+0.5*abs(inG[i-1,j-2]-inG[i,j-1])+0.5*abs(inG[i-2,j-1]-inG[i-1,j])
-            gra_SW = abs(inB[i+1,j-1]-inB[i-1,j+1])+abs(inR[i+2,j-2]-inR[i,j])+0.5*abs(inG[i+1,j]-inG[i,j+1])+0.5*abs(inG[i,j-1]-inG[i-1,j])+0.5*abs(inG[i+2,j-1]-inG[i+1,j])+0.5*abs(inG[i+1,j-2]-inG[i,j-1])
-
-            # determine thresholds 
-            gra = [gra_N, gra_E, gra_S, gra_W, gra_NE, gra_SE, gra_NW, gra_SW] 
-            T = T_func(gra)
-            ind = np.where(gra < T)[0]
-            Rave = zeros(8); Gave = zeros(8); Bave = zeros(8)
-            if len(ind) > 0:
-                for k in ind:
-                    if k == 0:
-                            Rave[k] = 0.5*(inR[i,j]+inR[i-2,j])
-                            Gave[k] = inG[i-1,j] 
-                            Bave[k] = 0.5*(inB[i-1,j-1]+inB[i-1,j+1]) 
-                    elif k == 1:
-                            Rave[k] = 0.5*(inR[i,j]+inR[i,j+2]) 
-                            Gave[k] = inG[i,j+1] 
-                            Bave[k] = 0.5*(inB[i-1,j+1]+inB[i+1,j+1]) 
-                    elif k == 2: 
-                            Rave[k] = 0.5*(inR[i,j]+inR[i+2,j]) 
-                            Gave[k] = inG[i+1,j] 
-                            Bave[k] = 0.5*(inB[i+1,j-1]+inB[i+1,j+1]) 
-                    elif k == 3: 
-                            Rave[k] = 0.5*(inR[i,j]+inR[i,j-2]) 
-                            Gave[k] = inG[i,j-1] 
-                            Bave[k] = 0.5*(inB[i-1,j-1]+inB[i+1,j-1]) 
-                    elif k == 4: 
-                            Rave[k] = 0.5*(inR[i,j]+inR[i-2,j+2]) 
-                            Gave[k] = 0.25*(inG[i,j+1]+inG[i-1,j+2]+inG[i-1,j]+inG[i-2,j+1]) 
-                            Bave[k] = inB[i-1,j+1] 
-                    elif k == 5:
-                            Rave[k] = 0.5*(inR[i,j]+inR[i+2,j+2]) 
-                            Gave[k] = 0.25*(inG[i,j+1]+inG[i+1,j+2]+inG[i+1,j]+inG[i+2,j+1]) 
-                            Bave[k] = inB[i+1,j+1] 
-                    elif k == 6:
-                            Rave[k] = 0.5*(inR[i,j]+inR[i-2,j-2]) 
-                            Gave[k] = 0.25*(inG[i,j-1]+inG[i-1,j-2]+inG[i-1,j]+inG[i-2,j-1]) 
-                            Bave[k] = inB[i-1,j-1] 
-                    elif k == 7:
-                            Rave[k] = 0.5*(inR[i,j]+inR[i+2,j-2]) 
-                            Gave[k] = 0.25*(inG[i,j-1]+inG[i+1,j-2]+inG[i+1,j]+inG[i+2,j-1]) 
-                            Bave[k] = inB[i+1,j-1] 
-   
-                Rsum = sum(Rave) 
-                Gsum = sum(Gave) 
-                Bsum = sum(Bave) 
-                outG[i,j] = inR[i,j]+(Gsum-Rsum)/len(ind) 
-                outB[i,j] = inR[i,j]+(Bsum-Rsum)/len(ind)
-            else:
-                # all gradients are zero
-                outG[i,j] = inR[i,j]
-                outB[i,j] = inR[i,j]
-     
-    # Second : consider at blue pixels 
-    for i in By:
-        for j in Bx:
-            # form 8 gradients : N,E,S,W,NE,SE,NW,SW 
-            gra_N = abs(inG[i-1,j]-inG[i+1,j])+abs(inB[i-2,j]-inB[i,j])+0.5*abs(inR[i-1,j-1]-inR[i+1,j-1])+0.5*abs(inR[i-1,j+1]-inR[i+1,j+1])+0.5*abs(inG[i-2,j-1]-inG[i,j-1])+0.5*abs(inG[i-2,j+1]-inG[i,j+1])
-            gra_E = abs(inG[i,j+1]-inG[i,j-1])+abs(inB[i,j+2]-inB[i,j])+0.5*abs(inR[i-1,j+1]-inR[i-1,j-1])+0.5*abs(inR[i+1,j+1]-inR[i+1,j-1])+0.5*abs(inG[i-1,j+2]-inG[i-1,j])+0.5*abs(inG[i+1,j+2]-inG[i+1,j])
-            gra_S = abs(inG[i+1,j]-inG[i-1,j])+abs(inB[i+2,j]-inB[i,j])+0.5*abs(inR[i+1,j+1]-inR[i-1,j+1])+0.5*abs(inR[i+1,j-1]-inR[i-1,j-1])+0.5*abs(inG[i+2,j+1]-inG[i,j+1])+0.5*abs(inG[i+2,j-1]-inG[i,j-1])
-            gra_W = abs(inG[i,j-1]-inG[i,j+1])+abs(inB[i,j-2]-inB[i,j])+0.5*abs(inR[i+1,j-1]-inR[i+1,j+1])+0.5*abs(inR[i-1,j-1]-inR[i-1,j+1])+0.5*abs(inG[i+1,j-2]-inG[i+1,j])+0.5*abs(inG[i-1,j-2]-inG[i-1,j])
-     
-            gra_NE = abs(inR[i-1,j+1]-inR[i+1,j-1])+abs(inB[i-2,j+2]-inB[i,j])+0.5*abs(inG[i-1,j]-inG[i,j-1])+0.5*abs(inG[i,j+1]-inG[i+1,j])+0.5*abs(inG[i-2,j+1]-inG[i-1,j])+0.5*abs(inG[i-1,j+2]-inG[i,j+1])
-            gra_SE = abs(inR[i+1,j+1]-inR[i-1,j-1])+abs(inB[i+2,j+2]-inB[i,j])+0.5*abs(inG[i,j+1]-inG[i-1,j])+0.5*abs(inG[i+1,j]-inG[i,j-1])+0.5*abs(inG[i+1,j+2]-inG[i,j+1])+0.5*abs(inG[i+2,j+1]-inG[i+1,j])
-            gra_NW = abs(inR[i-1,j-1]-inR[i+1,j+1])+abs(inB[i-2,j-2]-inB[i,j])+0.5*abs(inG[i-1,j]-inG[i,j+1])+0.5*abs(inG[i,j-1]-inG[i+1,j])+0.5*abs(inG[i-2,j-1]-inG[i-1,j])+0.5*abs(inG[i-1,j-2]-inG[i,j-1])
-            gra_SW = abs(inR[i+1,j-1]-inR[i-1,j+1])+abs(inB[i+2,j-2]-inB[i,j])+0.5*abs(inG[i+1,j]-inG[i,j+1])+0.5*abs(inG[i,j-1]-inG[i-1,j])+0.5*abs(inG[i+2,j-1]-inG[i+1,j])+0.5*abs(inG[i+1,j-2]-inG[i,j-1]) 
-      
-     
-            # determine thresholds 
-            gra = [gra_N, gra_E, gra_S, gra_W, gra_NE, gra_SE, gra_NW, gra_SW] 
-            T = T_func(gra)
-            ind = np.where(gra < T)[0]
-            Rave = zeros(8); Gave = zeros(8); Bave = zeros(8)
-            if len(ind) > 0:
-                for k in ind:
-                    if k == 0:
-                            Bave[k] = 0.5*(inB[i,j]+inB[i-2,j]) 
-                            Gave[k] = inG[i-1,j] 
-                            Rave[k] = 0.5*(inR[i-1,j-1]+inR[i-1,j+1]) 
-                    elif k == 1:
-                            Bave[k] = 0.5*(inB[i,j]+inB[i,j+2]) 
-                            Gave[k] = inG[i,j+1] 
-                            Rave[k] = 0.5*(inR[i-1,j+1]+inR[i+1,j+1]) 
-                    elif k == 2: 
-                            Bave[k] = 0.5*(inB[i,j]+inB[i+2,j]) 
-                            Gave[k] = inG[i+1,j] 
-                            Rave[k] = 0.5*(inR[i+1,j-1]+inR[i+1,j+1]) 
-                    elif k == 3:
-                            Bave[k] = 0.5*(inB[i,j]+inB[i,j-2]) 
-                            Gave[k] = inG[i,j-1] 
-                            Rave[k] = 0.5*(inR[i-1,j-1]+inR[i+1,j-1]) 
-                    elif k == 4:
-                            Bave[k] = 0.5*(inB[i,j]+inB[i-2,j+2]) 
-                            Gave[k] = 0.25*(inG[i,j+1]+inG[i-1,j+2]+inG[i-1,j]+inG[i-2,j+1]) 
-                            Rave[k] = inR[i-1,j+1] 
-                    elif k == 5:
-                            Bave[k] = 0.5*(inB[i,j]+inB[i+2,j+2]) 
-                            Gave[k] = 0.25*(inG[i,j+1]+inG[i+1,j+2]+inG[i+1,j]+inG[i+2,j+1]) 
-                            Rave[k] = inR[i+1,j+1] 
-                    elif k == 6:
-                            Bave[k] = 0.5*(inB[i,j]+inB[i-2,j-2]) 
-                            Gave[k] = 0.25*(inG[i,j-1]+inG[i-1,j-2]+inG[i-1,j]+inG[i-2,j-1]) 
-                            Rave[k] = inR[i-1,j-1] 
-                    elif k == 7:
-                            Bave[k] = 0.5*(inB[i,j]+inB[i+2,j-2]) 
-                            Gave[k] = 0.25*(inG[i,j-1]+inG[i+1,j-2]+inG[i+1,j]+inG[i+2,j-1]) 
-                            Rave[k] = inR[i+1,j-1] 
- 
-                Rsum = sum(Rave)
-                Gsum = sum(Gave)
-                Bsum = sum(Bave)
-                outG[i,j] = inB[i,j]+(Gsum-Bsum)/len(ind) 
-                outR[i,j] = inB[i,j]+(Rsum-Bsum)/len(ind)
-            else:
-                # all gradients are zero
-                outG[i,j] = inB[i,j]
-                outR[i,j] = inB[i,j]
- 
-     
-    #%%%%%%%%%%%%%%%%%%%%%%%%% 
-    # Estimating the missing color values at the green pixel location 
-    # First : consider those green pixels at upper-left 2x2 corner 
-    for i in G0y:
-        for j in G0x:
-            # form 8 gradients : N,E,S,W,NE,SE,NW,SW 
-            gra_N = abs(inB[i-1,j]-inB[i+1,j])+abs(inG[i-2,j]-inG[i,j])+0.5*abs(inG[i-1,j-1]-inG[i+1,j-1])+0.5*abs(inG[i-1,j+1]-inG[i+1,j+1])+0.5*abs(inR[i-2,j-1]-inR[i,j-1])+0.5*abs(inR[i-2,j+1]-inR[i,j+1])
-            gra_E = abs(inR[i,j+1]-inR[i,j-1])+abs(inG[i,j+2]-inG[i,j])+0.5*abs(inG[i-1,j+1]-inG[i-1,j-1])+0.5*abs(inG[i+1,j+1]-inG[i+1,j-1])+0.5*abs(inB[i-1,j+2]-inB[i-1,j])+0.5*abs(inB[i+1,j+2]-inB[i+1,j])
-            gra_S = abs(inB[i+1,j]-inB[i-1,j])+abs(inG[i+2,j]-inG[i,j])+0.5*abs(inG[i+1,j+1]-inG[i-1,j+1])+0.5*abs(inG[i+1,j-1]-inG[i-1,j-1])+0.5*abs(inR[i+2,j+1]-inR[i,j+1])+0.5*abs(inR[i+2,j-1]-inR[i,j-1])
-            gra_W = abs(inR[i,j-1]-inR[i,j+1])+abs(inG[i,j-2]-inG[i,j])+0.5*abs(inG[i+1,j-1]-inG[i+1,j+1])+0.5*abs(inG[i-1,j-1]-inG[i-1,j+1])+0.5*abs(inB[i+1,j-2]-inB[i+1,j])+0.5*abs(inB[i-1,j-2]-inB[i-1,j])
-     
-            gra_NE = abs(inG[i-1,j+1]-inG[i+1,j-1])+abs(inG[i-2,j+2]-inG[i,j])+abs(inR[i-2,j+1]-inR[i,j-1])+abs(inB[i-1,j+2]-inB[i+1,j])
-            gra_SE = abs(inG[i+1,j+1]-inG[i-1,j-1])+abs(inG[i+2,j+2]-inG[i,j])+abs(inB[i+1,j+2]-inB[i-1,j])+abs(inR[i+2,j+1]-inR[i,j-1])
-            gra_NW = abs(inG[i-1,j-1]-inG[i+1,j+1])+abs(inG[i-2,j-2]-inG[i,j])+abs(inR[i-2,j-1]-inR[i,j+1])+abs(inB[i-1,j-2]-inB[i+1,j])
-            gra_SW = abs(inG[i+1,j-1]-inG[i-1,j+1])+abs(inG[i+2,j-2]-inG[i,j])+abs(inR[i+2,j-1]-inR[i,j+1])+abs(inB[i+1,j-2]-inG[i-1,j])
-     
-            # determine thresholds 
-            gra = [gra_N, gra_E, gra_S, gra_W, gra_NE, gra_SE, gra_NW, gra_SW]  
-            T = T_func(gra)
-            ind = np.where(gra < T)[0]
-            Rave = zeros(8); Gave = zeros(8); Bave = zeros(8)
-            if len(ind) > 0:
-                for k in ind:
-                    if k == 0:
-                            Gave[k] = 0.5*(inG[i,j]+inG[i-2,j]) 
-                            Bave[k] = inB[i-1,j] 
-                            Rave[k] = 0.25*(inR[i-2,j-1]+inR[i-2,j+1]+inR[i,j-1]+inR[i,j+1]) 
-                    elif k == 1:
-                            Gave[k] = 0.5*(inG[i,j]+inG[i,j+2]) 
-                            Rave[k] = inR[i,j+1] 
-                            Bave[k] = 0.25*(inB[i-1,j]+inB[i+1,j]+inB[i-1,j+2]+inB[i+1,j+2]) 
-                    elif k == 2:
-                            Gave[k] = 0.5*(inG[i,j]+inG[i+2,j]) 
-                            Bave[k] = inB[i+1,j] 
-                            Rave[k] = 0.25*(inR[i,j-1]+inR[i,j+1]+inR[i+2,j-1]+inR[i+2,j+1]) 
-                    elif k == 3:
-                            Gave[k] = 0.5*(inG[i,j]+inG[i,j-2]) 
-                            Rave[k] = inR[i,j-1] 
-                            Bave[k] = 0.25*(inB[i-1,j-2]+inB[i-1,j]+inB[i+1,j-2]+inB[i+1,j]) 
-                    elif k == 4: 
-                            Rave[k] = 0.5*(inR[i-2,j+1]+inR[i,j+1]) 
-                            Bave[k] = 0.5*(inB[i-1,j]+inB[i-1,j+2]) 
-                            Gave[k] = inG[i-1,j+1] 
-                    elif k == 5: 
-                            Rave[k] = 0.5*(inR[i,j+1]+inR[i+2,j+1]) 
-                            Bave[k] = 0.5*(inB[i+1,j]+inB[i+1,j+2]) 
-                            Gave[k] = inG[i+1,j+1] 
-                    elif k == 6:
-                            Rave[k] = 0.5*(inR[i,j-1]+inR[i-2,j-1]) 
-                            Bave[k] = 0.5*(inB[i-1,j-2]+inB[i-1,j]) 
-                            Gave[k] = inG[i-1,j-1] 
-                    elif k == 7:
-                            Rave[k] = 0.5*(inR[i,j-1]+inR[i+2,j-1]) 
-                            Bave[k] = 0.5*(inB[i+1,j-2]+inB[i+1,j]) 
-                            Gave[k] = inG[i+1,j-1] 
- 
-                Rsum = sum(Rave) 
-                Gsum = sum(Gave) 
-                Bsum = sum(Bave) 
-                outR[i,j] = inG[i,j]+(Rsum-Gsum)/len(ind) 
-                outB[i,j] = inG[i,j]+(Bsum-Gsum)/len(ind)
-            else:
-                # all gradients are zero
-                outR[i,j] = inG[i,j]
-                outB[i,j] = inG[i,j]
-     
-    # Second : consider those green pixels at the lower-right corner  
-    for i in G1y:
-        for j in G1x:
-            # form 8 gradients : N,E,S,W,NE,SE,NW,SW 
-            gra_N = abs(inR[i-1,j]-inR[i+1,j])+abs(inG[i-2,j]-inG[i,j])+0.5*abs(inG[i-1,j-1]-inG[i+1,j-1])+0.5*abs(inG[i-1,j+1]-inG[i+1,j+1])+0.5*abs(inB[i-2,j-1]-inB[i,j-1])+0.5*abs(inB[i-2,j+1]-inB[i,j+1])
-            gra_E = abs(inB[i,j+1]-inB[i,j-1])+abs(inG[i,j+2]-inG[i,j])+0.5*abs(inG[i-1,j+1]-inG[i-1,j-1])+0.5*abs(inG[i+1,j+1]-inG[i+1,j-1])+0.5*abs(inR[i-1,j+2]-inR[i-1,j])+0.5*abs(inR[i+1,j+2]-inR[i+1,j])
-            gra_S = abs(inR[i+1,j]-inR[i-1,j])+abs(inG[i+2,j]-inG[i,j])+0.5*abs(inG[i+1,j+1]-inG[i-1,j+1])+0.5*abs(inG[i+1,j-1]-inG[i-1,j-1])+0.5*abs(inB[i+2,j+1]-inB[i,j+1])+0.5*abs(inB[i+2,j-1]-inB[i,j-1])
-            gra_W = abs(inB[i,j-1]-inB[i,j+1])+abs(inG[i,j-2]-inG[i,j])+0.5*abs(inG[i+1,j-1]-inG[i+1,j+1])+0.5*abs(inG[i-1,j-1]-inG[i-1,j+1])+0.5*abs(inR[i+1,j-2]-inR[i+1,j])+0.5*abs(inR[i-1,j-2]-inR[i-1,j])
-     
-            gra_NE = abs(inG[i-1,j+1]-inG[i+1,j-1])+abs(inG[i-2,j+2]-inG[i,j])+abs(inB[i-2,j+1]-inB[i,j-1])+abs(inR[i-1,j+2]-inR[i+1,j])
-            gra_SE = abs(inG[i+1,j+1]-inG[i-1,j-1])+abs(inG[i+2,j+2]-inG[i,j])+abs(inR[i+1,j+2]-inR[i-1,j])+abs(inB[i+2,j+1]-inB[i,j-1])
-            gra_NW = abs(inG[i-1,j-1]-inG[i+1,j+1])+abs(inG[i-2,j-2]-inG[i,j])+abs(inB[i-2,j-1]-inB[i,j+1])+abs(inR[i-1,j-2]-inR[i+1,j])
-            gra_SW = abs(inG[i+1,j-1]-inG[i-1,j+1])+abs(inG[i+2,j-2]-inG[i,j])+abs(inB[i+2,j-1]-inB[i,j+1])+abs(inR[i+1,j-2]-inR[i-1,j])
-     
-            # determine thresholds 
-            gra = [gra_N, gra_E, gra_S, gra_W, gra_NE, gra_SE, gra_NW, gra_SW] 
-            T = T_func(gra)
-            ind = np.where(gra < T)[0]
-            Rave = zeros(8); Gave = zeros(8); Bave = zeros(8)
-            if len(ind) > 0:
-                for k in ind:
-                    if k == 0:
-                            Gave[k] = 0.5*(inG[i,j]+inG[i-2,j]) 
-                            Rave[k] = inR[i-1,j] 
-                            Bave[k] = 0.25*(inB[i-2,j-1]+inB[i-2,j+1]+inB[i,j-1]+inB[i,j+1]) 
-                    if k == 1:
-                            Gave[k] = 0.5*(inG[i,j]+inG[i,j+2]) 
-                            Bave[k] = inB[i,j+1] 
-                            Rave[k] = 0.25*(inR[i-1,j]+inR[i+1,j]+inR[i-1,j+2]+inR[i+1,j+2]) 
-                    if k == 2:
-                            Gave[k] = 0.5*(inG[i,j]+inG[i+2,j]) 
-                            Rave[k] = inR[i+1,j] 
-                            Bave[k] = 0.25*(inB[i,j-1]+inB[i,j+1]+inB[i+2,j-1]+inB[i+2,j+1]) 
-                    if k == 3:
-                            Gave[k] = 0.5*(inG[i,j]+inG[i,j-2]) 
-                            Bave[k] = inB[i,j-1] 
-                            Rave[k] = 0.25*(inR[i-1,j-2]+inR[i-1,j]+inR[i+1,j-2]+inR[i+1,j]) 
-                    if k == 4:
-                            Bave[k] = 0.5*(inB[i-2,j+1]+inB[i,j+1]) 
-                            Rave[k] = 0.5*(inR[i-1,j]+inR[i-1,j+2]) 
-                            Gave[k] = inG[i-1,j+1] 
-                    if k == 5:
-                            Bave[k] = 0.5*(inB[i,j+1]+inB[i+2,j+1]) 
-                            Rave[k] = 0.5*(inR[i+1,j]+inR[i+1,j+2]) 
-                            Gave[k] = inG[i+1,j+1] 
-                    if k == 6:
-                            Bave[k] = 0.5*(inB[i,j-1]+inB[i-2,j-1]) 
-                            Rave[k] = 0.5*(inR[i-1,j-2]+inR[i-1,j]) 
-                            Gave[k] = inG[i-1,j-1] 
-                    if k == 7:
-                            Bave[k] = 0.5*(inB[i,j-1]+inB[i+2,j-1]) 
-                            Rave[k] = 0.5*(inR[i+1,j-2]+inR[i+1,j]) 
-                            Gave[k] = inG[i+1,j-1] 
- 
-                Rsum = sum(Rave) 
-                Gsum = sum(Gave) 
-                Bsum = sum(Bave) 
-                outR[i,j] = inG[i,j]+(Rsum-Gsum)/len(ind) 
-                outB[i,j] = inG[i,j]+(Bsum-Gsum)/len(ind)
-            else:
-                # all gradients are zero
-                outR[i,j] = inG[i,j]
-                outB[i,j] = inG[i,j]
-     
-    outG = round(outG)   
-    outR = round(outR) 
-    outB = round(outB) 
- 
-    out[:,:,0] = outR 
-    out[:,:,1] = outG 
-    out[:,:,2] = outB 
-     
-    out[out < 0] = 0
-    
-    # Undo our rolling, if we did any
-    if pat_str in ['GRBG']:
-        pass
-    elif pat_str in ['GBRG']:
-        # This code only supports GRBG for now, so we must roll the input and then roll it back.
-        inp = np.roll(inp, (-1,-1), axis=(0,1))
-    elif pat_str in ['RGGB']:
-        inp = np.roll(inp, (0,-1), axis=(0,1))
-    elif pat_str in ['BGGR']:
-        inp = np.roll(inp, (-1,0), axis=(0,1))  
-     
-    return out
-
-if __name__ == '__main__':
-   img = io.imread("foo.png")
-   out= vng(img) 
-   plt.subplot(122)
-   plt.title("n_segments=300")
-   plt.imshow(out2)
-   plt.show()
-    
-   out.save('vngfoo.png')
-   print("Successfully saved")
-    
-```
-
 
 # Лабораторная работа 1. Получение изображений. Работа с RAW изображениями. Дебайеризация. Библиотеки работы с изображениями
 
@@ -692,3 +302,449 @@ status = cv2.imwrite(r'star_demos.tif', demos)
  Оригинал                           |  После VNG
 :---------------------------------:|:-------------------------:
  <img src="beforeVNG.png" width="400"/>|  <img src="afterVNG.png" width="400"/>
+
+
+ ```
+from PIL import Image
+import numpy as np
+import imageio
+from skimage import io
+
+abs = np.abs
+zeros = np.zeros
+sum = np.sum
+round = np.round
+
+
+def resize_image(input_image_path,
+                 output_image_path,
+                 size):
+    original_image = Image.open(input_image_path)
+    width, height = original_image.size
+    print('The original image size is {wide} wide x {height} '
+          'high'.format(wide=width, height=height))
+
+    resized_image = original_image.resize(size)
+    width, height = resized_image.size
+    print('The resized image size is {wide} wide x {height} '
+          'high'.format(wide=width, height=height))
+    resized_image.show()
+    resized_image.save(output_image_path)
+
+
+def vng(inp, pat_str='GRBG'):
+    if inp.ndim == 2:
+        inp = np.repeat(inp[:, :, np.newaxis], 3, axis=2)
+
+    assert (pat_str in ['GRBG', 'GBRG', 'RGGB', 'BGGR'])
+
+    if pat_str in ['GRBG']:
+        pass
+    elif pat_str in ['GBRG']:
+        # This code only supports GRBG for now, so we must roll the input and then roll it back.
+        inp = np.roll(inp, (1, 1), axis=(0, 1))
+    elif pat_str in ['RGGB']:
+        inp = np.roll(inp, (0, 1), axis=(0, 1))
+    elif pat_str in ['BGGR']:
+        inp = np.roll(inp, (1, 0), axis=(0, 1))
+
+    m, n = inp.shape[0:2]
+
+    inp = inp.astype('float')
+
+    inR = inp[:, :, 0]
+    inG = inp[:, :, 1]
+    inB = inp[:, :, 2]
+    out = inp.copy()
+    outR = inR.copy()
+    outG = inG.copy()
+    outB = inB.copy()
+
+    def T_func(gra):
+        k1 = 1.5;
+        k2 = 0.5
+        T = k1 * min(gra) + k2 * (max(gra) - min(gra))
+        #         T = min(gra) + max(max(gra)/2., 1) # Used in the OpenCV VNG implementation
+        #         T = min(gra) + 1
+        return T
+
+    # Pixel coordinates for GRBG pattern (assumed)
+    # G R G R
+    # B G B G
+    # G R G R
+    # B G B G
+    Ry = range(2, m - 2, 2)
+    Rx = range(3, n - 1, 2)
+    By = range(3, m - 1, 2)
+    Bx = range(2, n - 2, 2)
+    G0y = range(2, m - 2, 2)
+    G0x = range(2, n - 2, 2)
+    G1y = range(3, m - 1, 2)
+    G1x = range(3, n - 1, 2)
+
+    # Estimate the missing color values at a non-green pixel
+    # First : consider at red pixels
+    for i in Ry:
+        for j in Rx:
+            # form 8 gradients : N,E,S,W,NE,SE,NW,SW
+            gra_N = abs(inG[i - 1, j] - inG[i + 1, j]) + abs(inR[i - 2, j] - inR[i, j]) + 0.5 * abs(
+                inB[i - 1, j - 1] - inB[i + 1, j - 1]) + 0.5 * abs(inB[i - 1, j + 1] - inB[i + 1, j + 1]) + 0.5 * abs(
+                inG[i - 2, j - 1] - inG[i, j - 1]) + 0.5 * abs(inG[i - 2, j + 1] - inG[i, j + 1])
+            gra_E = abs(inG[i, j + 1] - inG[i, j - 1]) + abs(inR[i, j + 2] - inR[i, j]) + 0.5 * abs(
+                inB[i - 1, j + 1] - inB[i - 1, j - 1]) + 0.5 * abs(inB[i + 1, j + 1] - inB[i + 1, j - 1]) + 0.5 * abs(
+                inG[i - 1, j + 2] - inG[i - 1, j]) + 0.5 * abs(inG[i + 1, j + 2] - inG[i + 1, j])
+            gra_S = abs(inG[i + 1, j] - inG[i - 1, j]) + abs(inR[i + 2, j] - inR[i, j]) + 0.5 * abs(
+                inB[i + 1, j + 1] - inB[i - 1, j + 1]) + 0.5 * abs(inB[i + 1, j - 1] - inB[i - 1, j - 1]) + 0.5 * abs(
+                inG[i + 2, j + 1] - inG[i, j + 1]) + 0.5 * abs(inG[i + 2, j - 1] - inG[i, j - 1])
+            gra_W = abs(inG[i, j - 1] - inG[i, j + 1]) + abs(inR[i, j - 2] - inR[i, j]) + 0.5 * abs(
+                inB[i + 1, j - 1] - inB[i + 1, j + 1]) + 0.5 * abs(inB[i - 1, j - 1] - inB[i - 1, j + 1]) + 0.5 * abs(
+                inG[i + 1, j - 2] - inG[i + 1, j]) + 0.5 * abs(inG[i - 1, j - 2] - inG[i - 1, j])
+
+            gra_NE = abs(inB[i - 1, j + 1] - inB[i + 1, j - 1]) + abs(inR[i - 2, j + 2] - inR[i, j]) + 0.5 * abs(
+                inG[i - 1, j] - inG[i, j - 1]) + 0.5 * abs(inG[i, j + 1] - inG[i + 1, j]) + 0.5 * abs(
+                inG[i - 2, j + 1] - inG[i - 1, j]) + 0.5 * abs(inG[i - 1, j + 2] - inG[i, j + 1])
+            gra_SE = abs(inB[i + 1, j + 1] - inB[i - 1, j - 1]) + abs(inR[i + 2, j + 2] - inR[i, j]) + 0.5 * abs(
+                inG[i, j + 1] - inG[i - 1, j]) + 0.5 * abs(inG[i + 1, j] - inG[i, j - 1]) + 0.5 * abs(
+                inG[i + 1, j + 2] - inG[i, j + 1]) + 0.5 * abs(inG[i + 2, j + 1] - inG[i + 1, j])
+            gra_NW = abs(inB[i - 1, j - 1] - inB[i + 1, j + 1]) + abs(inR[i - 2, j - 2] - inR[i, j]) + 0.5 * abs(
+                inG[i, j - 1] - inG[i + 1, j]) + 0.5 * abs(inG[i - 1, j] - inG[i, j + 1]) + 0.5 * abs(
+                inG[i - 1, j - 2] - inG[i, j - 1]) + 0.5 * abs(inG[i - 2, j - 1] - inG[i - 1, j])
+            gra_SW = abs(inB[i + 1, j - 1] - inB[i - 1, j + 1]) + abs(inR[i + 2, j - 2] - inR[i, j]) + 0.5 * abs(
+                inG[i + 1, j] - inG[i, j + 1]) + 0.5 * abs(inG[i, j - 1] - inG[i - 1, j]) + 0.5 * abs(
+                inG[i + 2, j - 1] - inG[i + 1, j]) + 0.5 * abs(inG[i + 1, j - 2] - inG[i, j - 1])
+
+            # determine thresholds
+            gra = [gra_N, gra_E, gra_S, gra_W, gra_NE, gra_SE, gra_NW, gra_SW]
+            T = T_func(gra)
+            ind = np.where(gra < T)[0]
+            Rave = zeros(8);
+            Gave = zeros(8);
+            Bave = zeros(8)
+            if len(ind) > 0:
+                for k in ind:
+                    if k == 0:
+                        Rave[k] = 0.5 * (inR[i, j] + inR[i - 2, j])
+                        Gave[k] = inG[i - 1, j]
+                        Bave[k] = 0.5 * (inB[i - 1, j - 1] + inB[i - 1, j + 1])
+                    elif k == 1:
+                        Rave[k] = 0.5 * (inR[i, j] + inR[i, j + 2])
+                        Gave[k] = inG[i, j + 1]
+                        Bave[k] = 0.5 * (inB[i - 1, j + 1] + inB[i + 1, j + 1])
+                    elif k == 2:
+                        Rave[k] = 0.5 * (inR[i, j] + inR[i + 2, j])
+                        Gave[k] = inG[i + 1, j]
+                        Bave[k] = 0.5 * (inB[i + 1, j - 1] + inB[i + 1, j + 1])
+                    elif k == 3:
+                        Rave[k] = 0.5 * (inR[i, j] + inR[i, j - 2])
+                        Gave[k] = inG[i, j - 1]
+                        Bave[k] = 0.5 * (inB[i - 1, j - 1] + inB[i + 1, j - 1])
+                    elif k == 4:
+                        Rave[k] = 0.5 * (inR[i, j] + inR[i - 2, j + 2])
+                        Gave[k] = 0.25 * (inG[i, j + 1] + inG[i - 1, j + 2] + inG[i - 1, j] + inG[i - 2, j + 1])
+                        Bave[k] = inB[i - 1, j + 1]
+                    elif k == 5:
+                        Rave[k] = 0.5 * (inR[i, j] + inR[i + 2, j + 2])
+                        Gave[k] = 0.25 * (inG[i, j + 1] + inG[i + 1, j + 2] + inG[i + 1, j] + inG[i + 2, j + 1])
+                        Bave[k] = inB[i + 1, j + 1]
+                    elif k == 6:
+                        Rave[k] = 0.5 * (inR[i, j] + inR[i - 2, j - 2])
+                        Gave[k] = 0.25 * (inG[i, j - 1] + inG[i - 1, j - 2] + inG[i - 1, j] + inG[i - 2, j - 1])
+                        Bave[k] = inB[i - 1, j - 1]
+                    elif k == 7:
+                        Rave[k] = 0.5 * (inR[i, j] + inR[i + 2, j - 2])
+                        Gave[k] = 0.25 * (inG[i, j - 1] + inG[i + 1, j - 2] + inG[i + 1, j] + inG[i + 2, j - 1])
+                        Bave[k] = inB[i + 1, j - 1]
+
+                Rsum = sum(Rave)
+                Gsum = sum(Gave)
+                Bsum = sum(Bave)
+                outG[i, j] = inR[i, j] + (Gsum - Rsum) / len(ind)
+                outB[i, j] = inR[i, j] + (Bsum - Rsum) / len(ind)
+            else:
+                # all gradients are zero
+                outG[i, j] = inR[i, j]
+                outB[i, j] = inR[i, j]
+
+    # Second : consider at blue pixels
+    for i in By:
+        for j in Bx:
+            # form 8 gradients : N,E,S,W,NE,SE,NW,SW
+            gra_N = abs(inG[i - 1, j] - inG[i + 1, j]) + abs(inB[i - 2, j] - inB[i, j]) + 0.5 * abs(
+                inR[i - 1, j - 1] - inR[i + 1, j - 1]) + 0.5 * abs(inR[i - 1, j + 1] - inR[i + 1, j + 1]) + 0.5 * abs(
+                inG[i - 2, j - 1] - inG[i, j - 1]) + 0.5 * abs(inG[i - 2, j + 1] - inG[i, j + 1])
+            gra_E = abs(inG[i, j + 1] - inG[i, j - 1]) + abs(inB[i, j + 2] - inB[i, j]) + 0.5 * abs(
+                inR[i - 1, j + 1] - inR[i - 1, j - 1]) + 0.5 * abs(inR[i + 1, j + 1] - inR[i + 1, j - 1]) + 0.5 * abs(
+                inG[i - 1, j + 2] - inG[i - 1, j]) + 0.5 * abs(inG[i + 1, j + 2] - inG[i + 1, j])
+            gra_S = abs(inG[i + 1, j] - inG[i - 1, j]) + abs(inB[i + 2, j] - inB[i, j]) + 0.5 * abs(
+                inR[i + 1, j + 1] - inR[i - 1, j + 1]) + 0.5 * abs(inR[i + 1, j - 1] - inR[i - 1, j - 1]) + 0.5 * abs(
+                inG[i + 2, j + 1] - inG[i, j + 1]) + 0.5 * abs(inG[i + 2, j - 1] - inG[i, j - 1])
+            gra_W = abs(inG[i, j - 1] - inG[i, j + 1]) + abs(inB[i, j - 2] - inB[i, j]) + 0.5 * abs(
+                inR[i + 1, j - 1] - inR[i + 1, j + 1]) + 0.5 * abs(inR[i - 1, j - 1] - inR[i - 1, j + 1]) + 0.5 * abs(
+                inG[i + 1, j - 2] - inG[i + 1, j]) + 0.5 * abs(inG[i - 1, j - 2] - inG[i - 1, j])
+
+            gra_NE = abs(inR[i - 1, j + 1] - inR[i + 1, j - 1]) + abs(inB[i - 2, j + 2] - inB[i, j]) + 0.5 * abs(
+                inG[i - 1, j] - inG[i, j - 1]) + 0.5 * abs(inG[i, j + 1] - inG[i + 1, j]) + 0.5 * abs(
+                inG[i - 2, j + 1] - inG[i - 1, j]) + 0.5 * abs(inG[i - 1, j + 2] - inG[i, j + 1])
+            gra_SE = abs(inR[i + 1, j + 1] - inR[i - 1, j - 1]) + abs(inB[i + 2, j + 2] - inB[i, j]) + 0.5 * abs(
+                inG[i, j + 1] - inG[i - 1, j]) + 0.5 * abs(inG[i + 1, j] - inG[i, j - 1]) + 0.5 * abs(
+                inG[i + 1, j + 2] - inG[i, j + 1]) + 0.5 * abs(inG[i + 2, j + 1] - inG[i + 1, j])
+            gra_NW = abs(inR[i - 1, j - 1] - inR[i + 1, j + 1]) + abs(inB[i - 2, j - 2] - inB[i, j]) + 0.5 * abs(
+                inG[i - 1, j] - inG[i, j + 1]) + 0.5 * abs(inG[i, j - 1] - inG[i + 1, j]) + 0.5 * abs(
+                inG[i - 2, j - 1] - inG[i - 1, j]) + 0.5 * abs(inG[i - 1, j - 2] - inG[i, j - 1])
+            gra_SW = abs(inR[i + 1, j - 1] - inR[i - 1, j + 1]) + abs(inB[i + 2, j - 2] - inB[i, j]) + 0.5 * abs(
+                inG[i + 1, j] - inG[i, j + 1]) + 0.5 * abs(inG[i, j - 1] - inG[i - 1, j]) + 0.5 * abs(
+                inG[i + 2, j - 1] - inG[i + 1, j]) + 0.5 * abs(inG[i + 1, j - 2] - inG[i, j - 1])
+
+            # determine thresholds
+            gra = [gra_N, gra_E, gra_S, gra_W, gra_NE, gra_SE, gra_NW, gra_SW]
+            T = T_func(gra)
+            ind = np.where(gra < T)[0]
+            Rave = zeros(8);
+            Gave = zeros(8);
+            Bave = zeros(8)
+            if len(ind) > 0:
+                for k in ind:
+                    if k == 0:
+                        Bave[k] = 0.5 * (inB[i, j] + inB[i - 2, j])
+                        Gave[k] = inG[i - 1, j]
+                        Rave[k] = 0.5 * (inR[i - 1, j - 1] + inR[i - 1, j + 1])
+                    elif k == 1:
+                        Bave[k] = 0.5 * (inB[i, j] + inB[i, j + 2])
+                        Gave[k] = inG[i, j + 1]
+                        Rave[k] = 0.5 * (inR[i - 1, j + 1] + inR[i + 1, j + 1])
+                    elif k == 2:
+                        Bave[k] = 0.5 * (inB[i, j] + inB[i + 2, j])
+                        Gave[k] = inG[i + 1, j]
+                        Rave[k] = 0.5 * (inR[i + 1, j - 1] + inR[i + 1, j + 1])
+                    elif k == 3:
+                        Bave[k] = 0.5 * (inB[i, j] + inB[i, j - 2])
+                        Gave[k] = inG[i, j - 1]
+                        Rave[k] = 0.5 * (inR[i - 1, j - 1] + inR[i + 1, j - 1])
+                    elif k == 4:
+                        Bave[k] = 0.5 * (inB[i, j] + inB[i - 2, j + 2])
+                        Gave[k] = 0.25 * (inG[i, j + 1] + inG[i - 1, j + 2] + inG[i - 1, j] + inG[i - 2, j + 1])
+                        Rave[k] = inR[i - 1, j + 1]
+                    elif k == 5:
+                        Bave[k] = 0.5 * (inB[i, j] + inB[i + 2, j + 2])
+                        Gave[k] = 0.25 * (inG[i, j + 1] + inG[i + 1, j + 2] + inG[i + 1, j] + inG[i + 2, j + 1])
+                        Rave[k] = inR[i + 1, j + 1]
+                    elif k == 6:
+                        Bave[k] = 0.5 * (inB[i, j] + inB[i - 2, j - 2])
+                        Gave[k] = 0.25 * (inG[i, j - 1] + inG[i - 1, j - 2] + inG[i - 1, j] + inG[i - 2, j - 1])
+                        Rave[k] = inR[i - 1, j - 1]
+                    elif k == 7:
+                        Bave[k] = 0.5 * (inB[i, j] + inB[i + 2, j - 2])
+                        Gave[k] = 0.25 * (inG[i, j - 1] + inG[i + 1, j - 2] + inG[i + 1, j] + inG[i + 2, j - 1])
+                        Rave[k] = inR[i + 1, j - 1]
+
+                Rsum = sum(Rave)
+                Gsum = sum(Gave)
+                Bsum = sum(Bave)
+                outG[i, j] = inB[i, j] + (Gsum - Bsum) / len(ind)
+                outR[i, j] = inB[i, j] + (Rsum - Bsum) / len(ind)
+            else:
+                # all gradients are zero
+                outG[i, j] = inB[i, j]
+                outR[i, j] = inB[i, j]
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%
+    # Estimating the missing color values at the green pixel location
+    # First : consider those green pixels at upper-left 2x2 corner
+    for i in G0y:
+        for j in G0x:
+            # form 8 gradients : N,E,S,W,NE,SE,NW,SW
+            gra_N = abs(inB[i - 1, j] - inB[i + 1, j]) + abs(inG[i - 2, j] - inG[i, j]) + 0.5 * abs(
+                inG[i - 1, j - 1] - inG[i + 1, j - 1]) + 0.5 * abs(inG[i - 1, j + 1] - inG[i + 1, j + 1]) + 0.5 * abs(
+                inR[i - 2, j - 1] - inR[i, j - 1]) + 0.5 * abs(inR[i - 2, j + 1] - inR[i, j + 1])
+            gra_E = abs(inR[i, j + 1] - inR[i, j - 1]) + abs(inG[i, j + 2] - inG[i, j]) + 0.5 * abs(
+                inG[i - 1, j + 1] - inG[i - 1, j - 1]) + 0.5 * abs(inG[i + 1, j + 1] - inG[i + 1, j - 1]) + 0.5 * abs(
+                inB[i - 1, j + 2] - inB[i - 1, j]) + 0.5 * abs(inB[i + 1, j + 2] - inB[i + 1, j])
+            gra_S = abs(inB[i + 1, j] - inB[i - 1, j]) + abs(inG[i + 2, j] - inG[i, j]) + 0.5 * abs(
+                inG[i + 1, j + 1] - inG[i - 1, j + 1]) + 0.5 * abs(inG[i + 1, j - 1] - inG[i - 1, j - 1]) + 0.5 * abs(
+                inR[i + 2, j + 1] - inR[i, j + 1]) + 0.5 * abs(inR[i + 2, j - 1] - inR[i, j - 1])
+            gra_W = abs(inR[i, j - 1] - inR[i, j + 1]) + abs(inG[i, j - 2] - inG[i, j]) + 0.5 * abs(
+                inG[i + 1, j - 1] - inG[i + 1, j + 1]) + 0.5 * abs(inG[i - 1, j - 1] - inG[i - 1, j + 1]) + 0.5 * abs(
+                inB[i + 1, j - 2] - inB[i + 1, j]) + 0.5 * abs(inB[i - 1, j - 2] - inB[i - 1, j])
+
+            gra_NE = abs(inG[i - 1, j + 1] - inG[i + 1, j - 1]) + abs(inG[i - 2, j + 2] - inG[i, j]) + abs(
+                inR[i - 2, j + 1] - inR[i, j - 1]) + abs(inB[i - 1, j + 2] - inB[i + 1, j])
+            gra_SE = abs(inG[i + 1, j + 1] - inG[i - 1, j - 1]) + abs(inG[i + 2, j + 2] - inG[i, j]) + abs(
+                inB[i + 1, j + 2] - inB[i - 1, j]) + abs(inR[i + 2, j + 1] - inR[i, j - 1])
+            gra_NW = abs(inG[i - 1, j - 1] - inG[i + 1, j + 1]) + abs(inG[i - 2, j - 2] - inG[i, j]) + abs(
+                inR[i - 2, j - 1] - inR[i, j + 1]) + abs(inB[i - 1, j - 2] - inB[i + 1, j])
+            gra_SW = abs(inG[i + 1, j - 1] - inG[i - 1, j + 1]) + abs(inG[i + 2, j - 2] - inG[i, j]) + abs(
+                inR[i + 2, j - 1] - inR[i, j + 1]) + abs(inB[i + 1, j - 2] - inG[i - 1, j])
+
+            # determine thresholds
+            gra = [gra_N, gra_E, gra_S, gra_W, gra_NE, gra_SE, gra_NW, gra_SW]
+            T = T_func(gra)
+            ind = np.where(gra < T)[0]
+            Rave = zeros(8);
+            Gave = zeros(8);
+            Bave = zeros(8)
+            if len(ind) > 0:
+                for k in ind:
+                    if k == 0:
+                        Gave[k] = 0.5 * (inG[i, j] + inG[i - 2, j])
+                        Bave[k] = inB[i - 1, j]
+                        Rave[k] = 0.25 * (inR[i - 2, j - 1] + inR[i - 2, j + 1] + inR[i, j - 1] + inR[i, j + 1])
+                    elif k == 1:
+                        Gave[k] = 0.5 * (inG[i, j] + inG[i, j + 2])
+                        Rave[k] = inR[i, j + 1]
+                        Bave[k] = 0.25 * (inB[i - 1, j] + inB[i + 1, j] + inB[i - 1, j + 2] + inB[i + 1, j + 2])
+                    elif k == 2:
+                        Gave[k] = 0.5 * (inG[i, j] + inG[i + 2, j])
+                        Bave[k] = inB[i + 1, j]
+                        Rave[k] = 0.25 * (inR[i, j - 1] + inR[i, j + 1] + inR[i + 2, j - 1] + inR[i + 2, j + 1])
+                    elif k == 3:
+                        Gave[k] = 0.5 * (inG[i, j] + inG[i, j - 2])
+                        Rave[k] = inR[i, j - 1]
+                        Bave[k] = 0.25 * (inB[i - 1, j - 2] + inB[i - 1, j] + inB[i + 1, j - 2] + inB[i + 1, j])
+                    elif k == 4:
+                        Rave[k] = 0.5 * (inR[i - 2, j + 1] + inR[i, j + 1])
+                        Bave[k] = 0.5 * (inB[i - 1, j] + inB[i - 1, j + 2])
+                        Gave[k] = inG[i - 1, j + 1]
+                    elif k == 5:
+                        Rave[k] = 0.5 * (inR[i, j + 1] + inR[i + 2, j + 1])
+                        Bave[k] = 0.5 * (inB[i + 1, j] + inB[i + 1, j + 2])
+                        Gave[k] = inG[i + 1, j + 1]
+                    elif k == 6:
+                        Rave[k] = 0.5 * (inR[i, j - 1] + inR[i - 2, j - 1])
+                        Bave[k] = 0.5 * (inB[i - 1, j - 2] + inB[i - 1, j])
+                        Gave[k] = inG[i - 1, j - 1]
+                    elif k == 7:
+                        Rave[k] = 0.5 * (inR[i, j - 1] + inR[i + 2, j - 1])
+                        Bave[k] = 0.5 * (inB[i + 1, j - 2] + inB[i + 1, j])
+                        Gave[k] = inG[i + 1, j - 1]
+
+                Rsum = sum(Rave)
+                Gsum = sum(Gave)
+                Bsum = sum(Bave)
+                outR[i, j] = inG[i, j] + (Rsum - Gsum) / len(ind)
+                outB[i, j] = inG[i, j] + (Bsum - Gsum) / len(ind)
+            else:
+                # all gradients are zero
+                outR[i, j] = inG[i, j]
+                outB[i, j] = inG[i, j]
+
+    # Second : consider those green pixels at the lower-right corner
+    for i in G1y:
+        for j in G1x:
+            # form 8 gradients : N,E,S,W,NE,SE,NW,SW
+            gra_N = abs(inR[i - 1, j] - inR[i + 1, j]) + abs(inG[i - 2, j] - inG[i, j]) + 0.5 * abs(
+                inG[i - 1, j - 1] - inG[i + 1, j - 1]) + 0.5 * abs(inG[i - 1, j + 1] - inG[i + 1, j + 1]) + 0.5 * abs(
+                inB[i - 2, j - 1] - inB[i, j - 1]) + 0.5 * abs(inB[i - 2, j + 1] - inB[i, j + 1])
+            gra_E = abs(inB[i, j + 1] - inB[i, j - 1]) + abs(inG[i, j + 2] - inG[i, j]) + 0.5 * abs(
+                inG[i - 1, j + 1] - inG[i - 1, j - 1]) + 0.5 * abs(inG[i + 1, j + 1] - inG[i + 1, j - 1]) + 0.5 * abs(
+                inR[i - 1, j + 2] - inR[i - 1, j]) + 0.5 * abs(inR[i + 1, j + 2] - inR[i + 1, j])
+            gra_S = abs(inR[i + 1, j] - inR[i - 1, j]) + abs(inG[i + 2, j] - inG[i, j]) + 0.5 * abs(
+                inG[i + 1, j + 1] - inG[i - 1, j + 1]) + 0.5 * abs(inG[i + 1, j - 1] - inG[i - 1, j - 1]) + 0.5 * abs(
+                inB[i + 2, j + 1] - inB[i, j + 1]) + 0.5 * abs(inB[i + 2, j - 1] - inB[i, j - 1])
+            gra_W = abs(inB[i, j - 1] - inB[i, j + 1]) + abs(inG[i, j - 2] - inG[i, j]) + 0.5 * abs(
+                inG[i + 1, j - 1] - inG[i + 1, j + 1]) + 0.5 * abs(inG[i - 1, j - 1] - inG[i - 1, j + 1]) + 0.5 * abs(
+                inR[i + 1, j - 2] - inR[i + 1, j]) + 0.5 * abs(inR[i - 1, j - 2] - inR[i - 1, j])
+
+            gra_NE = abs(inG[i - 1, j + 1] - inG[i + 1, j - 1]) + abs(inG[i - 2, j + 2] - inG[i, j]) + abs(
+                inB[i - 2, j + 1] - inB[i, j - 1]) + abs(inR[i - 1, j + 2] - inR[i + 1, j])
+            gra_SE = abs(inG[i + 1, j + 1] - inG[i - 1, j - 1]) + abs(inG[i + 2, j + 2] - inG[i, j]) + abs(
+                inR[i + 1, j + 2] - inR[i - 1, j]) + abs(inB[i + 2, j + 1] - inB[i, j - 1])
+            gra_NW = abs(inG[i - 1, j - 1] - inG[i + 1, j + 1]) + abs(inG[i - 2, j - 2] - inG[i, j]) + abs(
+                inB[i - 2, j - 1] - inB[i, j + 1]) + abs(inR[i - 1, j - 2] - inR[i + 1, j])
+            gra_SW = abs(inG[i + 1, j - 1] - inG[i - 1, j + 1]) + abs(inG[i + 2, j - 2] - inG[i, j]) + abs(
+                inB[i + 2, j - 1] - inB[i, j + 1]) + abs(inR[i + 1, j - 2] - inR[i - 1, j])
+
+            # determine thresholds
+            gra = [gra_N, gra_E, gra_S, gra_W, gra_NE, gra_SE, gra_NW, gra_SW]
+            T = T_func(gra)
+            ind = np.where(gra < T)[0]
+            Rave = zeros(8);
+            Gave = zeros(8);
+            Bave = zeros(8)
+            if len(ind) > 0:
+                for k in ind:
+                    if k == 0:
+                        Gave[k] = 0.5 * (inG[i, j] + inG[i - 2, j])
+                        Rave[k] = inR[i - 1, j]
+                        Bave[k] = 0.25 * (inB[i - 2, j - 1] + inB[i - 2, j + 1] + inB[i, j - 1] + inB[i, j + 1])
+                    if k == 1:
+                        Gave[k] = 0.5 * (inG[i, j] + inG[i, j + 2])
+                        Bave[k] = inB[i, j + 1]
+                        Rave[k] = 0.25 * (inR[i - 1, j] + inR[i + 1, j] + inR[i - 1, j + 2] + inR[i + 1, j + 2])
+                    if k == 2:
+                        Gave[k] = 0.5 * (inG[i, j] + inG[i + 2, j])
+                        Rave[k] = inR[i + 1, j]
+                        Bave[k] = 0.25 * (inB[i, j - 1] + inB[i, j + 1] + inB[i + 2, j - 1] + inB[i + 2, j + 1])
+                    if k == 3:
+                        Gave[k] = 0.5 * (inG[i, j] + inG[i, j - 2])
+                        Bave[k] = inB[i, j - 1]
+                        Rave[k] = 0.25 * (inR[i - 1, j - 2] + inR[i - 1, j] + inR[i + 1, j - 2] + inR[i + 1, j])
+                    if k == 4:
+                        Bave[k] = 0.5 * (inB[i - 2, j + 1] + inB[i, j + 1])
+                        Rave[k] = 0.5 * (inR[i - 1, j] + inR[i - 1, j + 2])
+                        Gave[k] = inG[i - 1, j + 1]
+                    if k == 5:
+                        Bave[k] = 0.5 * (inB[i, j + 1] + inB[i + 2, j + 1])
+                        Rave[k] = 0.5 * (inR[i + 1, j] + inR[i + 1, j + 2])
+                        Gave[k] = inG[i + 1, j + 1]
+                    if k == 6:
+                        Bave[k] = 0.5 * (inB[i, j - 1] + inB[i - 2, j - 1])
+                        Rave[k] = 0.5 * (inR[i - 1, j - 2] + inR[i - 1, j])
+                        Gave[k] = inG[i - 1, j - 1]
+                    if k == 7:
+                        Bave[k] = 0.5 * (inB[i, j - 1] + inB[i + 2, j - 1])
+                        Rave[k] = 0.5 * (inR[i + 1, j - 2] + inR[i + 1, j])
+                        Gave[k] = inG[i + 1, j - 1]
+
+                Rsum = sum(Rave)
+                Gsum = sum(Gave)
+                Bsum = sum(Bave)
+                outR[i, j] = inG[i, j] + (Rsum - Gsum) / len(ind)
+                outB[i, j] = inG[i, j] + (Bsum - Gsum) / len(ind)
+            else:
+                # all gradients are zero
+                outR[i, j] = inG[i, j]
+                outB[i, j] = inG[i, j]
+
+    outG = round(outG)
+    outR = round(outR)
+    outB = round(outB)
+
+    out[:, :, 0] = outR
+    out[:, :, 1] = outG
+    out[:, :, 2] = outB
+
+    out[out < 0] = 0
+
+    # Undo our rolling, if we did any
+    if pat_str in ['GRBG']:
+        pass
+    elif pat_str in ['GBRG']:
+        # This code only supports GRBG for now, so we must roll the input and then roll it back.
+        inp = np.roll(inp, (-1, -1), axis=(0, 1))
+    elif pat_str in ['RGGB']:
+        inp = np.roll(inp, (0, -1), axis=(0, 1))
+    elif pat_str in ['BGGR']:
+        inp = np.roll(inp, (-1, 0), axis=(0, 1))
+
+    return out
+
+
+if __name__ == '__main__':
+    img = io.imread("f2.png")
+    out = vng(img)
+    io.imsave("vngfoo.png", out)
+    #out.save('vngfoo.png')
+    print("Successfully saved")
+    
+ ```
+ 
+ Оригинал                           |  После VNG
+:---------------------------------:|:-------------------------:
+ <img src="catVng.png" width="400"/>|  <img src="catAftVng.png" width="400"/>
+
+
+
+Оригинал                           |  После VNG
+:---------------------------------:|:-------------------------:
+ <img src="tumBefVng.png" width="400"/>|  <img src="tumAftVng.png" width="400"/>
+
