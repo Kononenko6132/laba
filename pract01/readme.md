@@ -740,7 +740,7 @@ if __name__ == '__main__':
  
  Оригинал                           |  После VNG
 :---------------------------------:|:-------------------------:
- <img src="catBefVng.png" width="400"/>|  <img src="catAftVng.png" width="400"/>
+ <img src="catBefVng.png" width="400"/>|  <img src="catAftPng.png" width="400"/>
 
 
 
