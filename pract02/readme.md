@@ -59,7 +59,7 @@ image3.save('originalR.jpg')
  <img src="channel1.jpg" width="700"/>    |  <img src="channel2.jpg" width="700"/>  |  <img src="channel3.jpg" width="700"/> | <img src="original.jpg" width="700"/>  |
  
  
- Отображение по каналам R                 | Отображение по каналам G                | Отображение по каналам B               | Оригинал               | 
+ Отображение по каналам B                 | Отображение по каналам G                | Отображение по каналам R               | Оригинал               | 
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|:--------------------------------------:|
  <img src="originalR.jpg" width="700"/>   |  <img src="originalG.jpg" width="700"/> |  <img src="originalB.jpg" width="700"/>| <img src="original.jpg" width="700"/>  |
  
