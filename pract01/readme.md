@@ -65,7 +65,7 @@ cv2.destroyAllWindows()
 Оригинал                     | Результат байеризации |
 :---------------------------------:|:-------------------------:
  <img src="original.jpg" width="400"/>|  <img src="ourBayer.jpg" width="400"/>
-```
+
 
 
  
@@ -176,7 +176,7 @@ if __name__ == '__main__':
     np_channel = pack_raw('tum.ARW', auto_bright=False, HDR=False)
     img = raw.postprocess(use_camera_wb=True, half_size=False, no_auto_bright=True, output_bps=16)
     imageio.imsave('rawpy.jpg', img)
- ```
+```
 
  
 Преобразованное в jpg                     | Результат байеризации |
