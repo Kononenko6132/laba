@@ -38,7 +38,7 @@ cv2.destroyAllWindows()
  
 Оригинал                     | Результат байеризации |
 :---------------------------------:|:-------------------------:
- <img src="orignal.jpg" width="400"/>|  <img src="ourBayer.jpg" width="400"/>
+ <img src="original.jpg" width="400"/>|  <img src="ourBayer.jpg" width="400"/>
 
 
 
