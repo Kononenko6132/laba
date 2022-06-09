@@ -238,7 +238,7 @@ public BufferedImage biLinear(BufferedImage bufferedImage) throws IOException {
         return result;
     }
   ```
-  Оригинал                     | Результат суперпикселей |
+  Оригинал                     | Результат билинейной интерполяции |
 :---------------------------------:|:-------------------------:
  <img src="original.jpg" width="400"/>|  <img src="lidInt.jpg" width="400"/>
   
