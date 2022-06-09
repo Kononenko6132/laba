@@ -31,6 +31,18 @@ cv2.destroyAllWindows()
   <img src="image.png" width="400"/>|  
  
  
+ 
+ 
+ ##  Байеризация
+
+ 
+Оригинал                     | Результат байеризации |
+:---------------------------------:|:-------------------------:
+ <img src="orignal.jpg" width="400"/>|  <img src="ourBayer.jpg" width="400"/>
+
+
+
+ 
 ## Получение RAW изображения с устройства и создание алгоритма "байеризации"
 ```
 import rawpy
@@ -144,6 +156,17 @@ if __name__ == '__main__':
 Преобразованное в jpg                     | Результат байеризации |
 :---------------------------------:|:-------------------------:
  <img src="rawpy.jpg" width="400"/>|  <img src="result2.jpg" width="400"/>
+
+##  Реализация суперпикселей
+
+ 
+Оригинал (байеризация)                    | Результат суперпикселей |
+:---------------------------------:|:-------------------------:
+ <img src="ourVng.jpg" width="400"/>|  <img src="SuperPix.jpg" width="400"/>
+
+
+
+
 
 
 ##  Реализация суперпикселей
@@ -304,7 +327,14 @@ status = cv2.imwrite(r'star_demos.tif', demos)
  <img src="beforeVNG.png" width="400"/>|  <img src="afterVNG.png" width="400"/>
 
 
- ```
+
+## VNG алгоритм
+   Оригинал                           |  После VNG|  После VNG (библиотека)
+:---------------------------------:|:-------------------------:|:-------------------------:
+ <img src="ourBayer.jpg" width="400"/>|  <img src="ourVng.jpg" width="400"/>|  <img src="libVnng.jpg" width="400"/>
+ 
+ 
+ 
 from PIL import Image
 import numpy as np
 import imageio
