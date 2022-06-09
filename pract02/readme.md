@@ -313,7 +313,7 @@ public BufferedImage XYZtoRGB(BufferedImage img) throws IOException {
             h = 60 * (r - g) / (v - min) + 240;
         }
         if (h < 0) h += 360;
-        return new double[]{h / 2, s * 255, v * 255};
+        return new double[]{h / 2, s * 255, v};
     }
     
  public static int HSVtoRGB(float H, float S, float V) {
@@ -372,7 +372,7 @@ public BufferedImage XYZtoRGB(BufferedImage img) throws IOException {
  
  Ручное RGB->HSV              | Библиотека RGB->HSV             |Разница RGB->HSV               | 
 :----------------------------------------:|:---------------------------------------:|:--------------------------------------:|
- <img src="rgbhsvMethod.jpg" width="700"/>  |  <img src="rgbhsvLib.jpg" width="700"/>|  <img src="rgbhsvDif.jpg" width="700"/> |   |
+ <img src="ourChange.jpg" width="700"/>  |  <img src="libChange.jpg" width="700"/>|<img src="difChange.jpg" width="700"/> |   |
  
  
  Ручное HSV->RGB            | Библиотека HSV->RGB             |Разница HSV->RGB               | 
