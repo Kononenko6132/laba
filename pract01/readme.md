@@ -331,10 +331,10 @@ status = cv2.imwrite(r'star_demos.tif', demos)
 ## VNG алгоритм
    Оригинал                           |  После VNG|  После VNG (библиотека)
 :---------------------------------:|:-------------------------:|:-------------------------:
- <img src="ourBayer.jpg" width="400"/>|  <img src="ourVng.jpg" width="400"/>|  <img src="libVnng.jpg" width="400"/>
+ <img src="ourBayer.jpg" width="400"/>|  <img src="ourVng.jpg" width="400"/>|  <img src="libVng.jpg" width="400"/>
  
  
- 
+``` 
 from PIL import Image
 import numpy as np
 import imageio
@@ -766,7 +766,8 @@ if __name__ == '__main__':
     #out.save('vngfoo.png')
     print("Successfully saved")
     
- ```
+    
+```
  
  Оригинал                           |  После VNG
 :---------------------------------:|:-------------------------:
