@@ -59,6 +59,9 @@ cv2.destroyAllWindows()
         save(result, "result/1lab", "bayerRes", "png");
         return result;
     }
+    
+  
+```
 Оригинал                     | Результат байеризации |
 :---------------------------------:|:-------------------------:
  <img src="original.jpg" width="400"/>|  <img src="ourBayer.jpg" width="400"/>
